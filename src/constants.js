@@ -7,6 +7,8 @@ export const FEED_SELECTOR =
 
 export const POST_SELECTOR = `${FEED_SELECTOR} > div[data-lazy-mount-id] > div[data-display-contents="true"] > div`
 
+export const POST_CONTENT_SELECTOR = 'div > div[role="listitem"] > div[data-display-contents="true"] > div > p > span[data-testid="expandable-text-box"]'
+
 export const DROPDOWN_TRIGGER_SELECTOR =
   'div[data-view-name="feed-nav-feed-sort-toggle"]'
 

@@ -11,6 +11,7 @@ import {
   LINKS_KEYWORD,
   OTHER_REACTIONS_KEYWORDS,
   POLLS_KEYWORD,
+  POST_CONTENT_SELECTOR,
   POST_SELECTOR,
   PROMOTED_KEYWORD,
   RECENT_OPTION_SELECTOR,
@@ -166,7 +167,7 @@ const getFeedKeywords = (config) => {
   return keywords
 }
 
-const blockPostsByKeywords = (keywords, mode, disablePostCount) => {
+const blockPostsByKeywords = (keywords, contentOnly, mode, disablePostCount) => {
   if (oldFeedKeywords.some((kw) => !keywords.includes(kw))) {
     resetShownPosts()
   }
@@ -174,6 +175,7 @@ const blockPostsByKeywords = (keywords, mode, disablePostCount) => {
   oldFeedKeywords = keywords
 
   let posts
+  let target
 
   const runBlockPosts = () => {
     if (runs % 10 === 0) resetBlockedPosts()
@@ -185,8 +187,15 @@ const blockPostsByKeywords = (keywords, mode, disablePostCount) => {
     // Filter only if there are enough posts to load more
     if (posts.length > 5 || mode == 'dim') {
       posts.forEach((post) => {
+        if (contentOnly) {
+          target = post.querySelector(POST_CONTENT_SELECTOR)
+          if (!target) return
+        } else {
+          target = post
+        }
+
         const keywordIndex = keywords.findIndex(
-          (keyword) => post.outerHTML.indexOf(keyword) !== -1
+          (keyword) => target.outerHTML.indexOf(keyword) !== -1
         )
 
         if (keywordIndex === -1) {
@@ -244,7 +253,7 @@ const handleFilterFeed = (mode, config) => {
 
   resetBlockedPosts()
   clearInterval(feedInterval)
-  blockPostsByKeywords(feedKeywords, mode, config['disable-postcount-prompt'])
+  blockPostsByKeywords(feedKeywords, config['hide-from-post-content'], mode, config['disable-postcount-prompt'])
 }
 
 export default (checkNeedUpdate, enabled, mode, config) => {
