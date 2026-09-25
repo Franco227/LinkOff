@@ -192,13 +192,14 @@ const blockPostsByKeywords = (baseKeywords, customKeywords, contentOnly, mode, d
     // Filter only if there are enough posts to load more
     if (posts.length > 5 || mode == 'dim') {
       posts.forEach((post) => {
-        const postContent = post.querySelector(POST_CONTENT_SELECTOR)
+        const postHtml = post.outerHTML
+        const customTargetHtml = contentOnly ? post.querySelector(POST_CONTENT_SELECTOR)?.outerHTML ?? '' : postHtml
 
         const baseKeywordIndex = baseKeywords.findIndex(
-          (keyword) => post.outerHTML.indexOf(keyword) !== -1
+          (keyword) => postHtml.indexOf(keyword) !== -1
         )
         const customKeywordIndex = customKeywords.findIndex(
-          (keyword) => contentOnly && postContent ? postContent.outerHTML.indexOf(keyword) !== -1 : post.outerHTML.indexOf(keyword) !== -1
+          (keyword) => customTargetHtml.indexOf(keyword) !== -1
         )
 
         if (baseKeywordIndex === -1 && customKeywordIndex === -1) {
