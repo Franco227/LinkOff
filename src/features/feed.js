@@ -172,7 +172,7 @@ const getCustomFeedKeywords = (config) => {
   return config['feed-keywords'] === '' ? [] : config['feed-keywords'].split(',')
 }
 
-const blockPostsByKeywords = (baseKeywords, customKeywords, contentOnly, mode, disablePostCount) => {
+const blockPostsByKeywords = (baseKeywords, customKeywords, contentOnly, caseSensitive, mode, disablePostCount) => {
   if (oldBaseFeedKeywords.some((kw) => !baseKeywords.includes(kw)) || oldCustomFeedKeywords.some((kw) => !customKeywords.includes(kw))) {
     resetShownPosts()
   }
@@ -196,7 +196,10 @@ const blockPostsByKeywords = (baseKeywords, customKeywords, contentOnly, mode, d
         const customTarget = contentOnly ? post.querySelector(POST_CONTENT_SELECTOR)?.textContent ?? '' : postHtml
 
         const matchesBase = baseKeywords.some((keyword) => postHtml.includes(keyword))
-        const matchesCustom = customKeywords.some((keyword) => customTarget.includes(keyword))
+        const matchesCustom = customKeywords.some((keyword) => {
+          if (caseSensitive) return customTarget.includes(keyword)
+          return customTarget.toLowerCase().includes(keyword.toLowerCase())
+        })
 
         if (!matchesBase && !matchesCustom) {
           removeHideClasses(post)
@@ -253,7 +256,14 @@ const handleFilterFeed = (mode, config) => {
 
   resetBlockedPosts()
   clearInterval(feedInterval)
-  blockPostsByKeywords(baseFeedKeywords, customFeedKeywords, config['hide-from-post-content'], mode, config['disable-postcount-prompt'])
+  blockPostsByKeywords(
+    baseFeedKeywords,
+    customFeedKeywords,
+    config['hide-from-post-content'],
+    config['keywords-case-sensitive'],
+    mode,
+    config['disable-postcount-prompt']
+  )
 }
 
 export default (checkNeedUpdate, enabled, mode, config) => {
