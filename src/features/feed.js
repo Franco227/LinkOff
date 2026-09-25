@@ -31,8 +31,10 @@ import {
 let runs = 0
 let feedInterval
 let postCountPrompted = false
-let feedKeywords = []
-let oldFeedKeywords = []
+let baseFeedKeywords = []
+let oldBaseFeedKeywords = []
+let customFeedKeywords = []
+let oldCustomFeedKeywords = []
 
 const handleSortByRecent = async (checkNeedUpdate) => {
   if (!checkNeedUpdate('sort-by-recent', true)) return
@@ -137,9 +139,8 @@ const handleAgeFiltering = (keywords, age) => {
   }
 }
 
-const getFeedKeywords = (config) => {
-  const keywords =
-    config['feed-keywords'] === '' ? [] : config['feed-keywords'].split(',')
+const getBaseFeedKeywords = (config) => {
+  const keywords = []
 
   const hideByAge = config['hide-by-age']
 
@@ -162,20 +163,24 @@ const getFeedKeywords = (config) => {
   if (config['hide-by-people']) keywords.push(BY_PEOPLE_KEYWORD)
   if (config['hide-suggested']) keywords.push(SUGGESTED_KEYWORD)
 
-  console.log('LinkOff: Current feed keywords are', keywords)
+  console.log('LinkOff: Current base feed keywords are', keywords)
 
   return keywords
 }
 
-const blockPostsByKeywords = (keywords, contentOnly, mode, disablePostCount) => {
-  if (oldFeedKeywords.some((kw) => !keywords.includes(kw))) {
+const getCustomFeedKeywords = (config) => {
+  return config['feed-keywords'] === '' ? [] : config['feed-keywords'].split(',')
+}
+
+const blockPostsByKeywords = (baseKeywords, customKeywords, contentOnly, mode, disablePostCount) => {
+  if (oldBaseFeedKeywords.some((kw) => !baseKeywords.includes(kw)) || oldCustomFeedKeywords.some((kw) => !customKeywords.includes(kw))) {
     resetShownPosts()
   }
 
-  oldFeedKeywords = keywords
+  oldBaseFeedKeywords = baseKeywords
+  oldCustomFeedKeywords = customKeywords
 
   let posts
-  let target
 
   const runBlockPosts = () => {
     if (runs % 10 === 0) resetBlockedPosts()
@@ -187,18 +192,16 @@ const blockPostsByKeywords = (keywords, contentOnly, mode, disablePostCount) => 
     // Filter only if there are enough posts to load more
     if (posts.length > 5 || mode == 'dim') {
       posts.forEach((post) => {
-        if (contentOnly) {
-          target = post.querySelector(POST_CONTENT_SELECTOR)
-          if (!target) return
-        } else {
-          target = post
-        }
+        const postContent = post.querySelector(POST_CONTENT_SELECTOR)
 
-        const keywordIndex = keywords.findIndex(
-          (keyword) => target.outerHTML.indexOf(keyword) !== -1
+        const baseKeywordIndex = baseKeywords.findIndex(
+          (keyword) => post.outerHTML.indexOf(keyword) !== -1
+        )
+        const customKeywordIndex = customKeywords.findIndex(
+          (keyword) => contentOnly && postContent ? postContent.outerHTML.indexOf(keyword) !== -1 : post.outerHTML.indexOf(keyword) !== -1
         )
 
-        if (keywordIndex === -1) {
+        if (baseKeywordIndex === -1 && customKeywordIndex === -1) {
           removeHideClasses(post)
           post.dataset.hidden = false
         } else {
@@ -215,7 +218,7 @@ const blockPostsByKeywords = (keywords, contentOnly, mode, disablePostCount) => 
     }
   }
 
-  if (keywords.length)
+  if (baseKeywords.length || customKeywords.length)
     feedInterval = setInterval(() => {
       runBlockPosts()
       runs++
@@ -253,7 +256,7 @@ const handleFilterFeed = (mode, config) => {
 
   resetBlockedPosts()
   clearInterval(feedInterval)
-  blockPostsByKeywords(feedKeywords, config['hide-from-post-content'], mode, config['disable-postcount-prompt'])
+  blockPostsByKeywords(baseFeedKeywords, customFeedKeywords, config['hide-from-post-content'], mode, config['disable-postcount-prompt'])
 }
 
 export default (checkNeedUpdate, enabled, mode, config) => {
@@ -272,9 +275,10 @@ export default (checkNeedUpdate, enabled, mode, config) => {
 
   handleSortByRecent(checkNeedUpdate)
 
-  feedKeywords = getFeedKeywords(config)
+  baseFeedKeywords = getBaseFeedKeywords(config)
+  customFeedKeywords = getCustomFeedKeywords(config)
 
-  if (feedKeywords !== oldFeedKeywords) {
+  if (baseFeedKeywords !== oldBaseFeedKeywords || customFeedKeywords !== oldCustomFeedKeywords) {
     handleFilterFeed(mode, config)
   }
 }
