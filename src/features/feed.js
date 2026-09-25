@@ -167,7 +167,7 @@ const getFeedKeywords = (config) => {
   return keywords
 }
 
-const blockPostsByKeywords = (keywords, contentOnly, mode, disablePostCount) => {
+const blockPostsByKeywords = (keywords, contentOnly, caseSensitive, mode, disablePostCount) => {
   if (oldFeedKeywords.some((kw) => !keywords.includes(kw))) {
     resetShownPosts()
   }
@@ -195,7 +195,12 @@ const blockPostsByKeywords = (keywords, contentOnly, mode, disablePostCount) => 
         }
 
         const keywordIndex = keywords.findIndex(
-          (keyword) => target.outerHTML.indexOf(keyword) !== -1
+          (keyword) => {
+            if (!caseSensitive) {
+              return target.outerHTML.toLowerCase().indexOf(keyword.toLowerCase()) !== -1
+            }
+            return target.outerHTML.indexOf(keyword) !== -1
+          }
         )
 
         if (keywordIndex === -1) {
@@ -253,7 +258,7 @@ const handleFilterFeed = (mode, config) => {
 
   resetBlockedPosts()
   clearInterval(feedInterval)
-  blockPostsByKeywords(feedKeywords, config['hide-from-post-content'], mode, config['disable-postcount-prompt'])
+  blockPostsByKeywords(feedKeywords, config['hide-from-post-content'], config['keywords-case-sensitive'], mode, config['disable-postcount-prompt'])
 }
 
 export default (checkNeedUpdate, enabled, mode, config) => {
