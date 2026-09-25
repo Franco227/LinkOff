@@ -195,14 +195,10 @@ const blockPostsByKeywords = (baseKeywords, customKeywords, contentOnly, mode, d
         const postHtml = post.outerHTML
         const customTargetHtml = contentOnly ? post.querySelector(POST_CONTENT_SELECTOR)?.outerHTML ?? '' : postHtml
 
-        const baseKeywordIndex = baseKeywords.findIndex(
-          (keyword) => postHtml.indexOf(keyword) !== -1
-        )
-        const customKeywordIndex = customKeywords.findIndex(
-          (keyword) => customTargetHtml.indexOf(keyword) !== -1
-        )
+        const matchesBase = baseKeywords.some((keyword) => postHtml.includes(keyword))
+        const matchesCustom = customKeywords.some((keyword) => customTargetHtml.includes(keyword))
 
-        if (baseKeywordIndex === -1 && customKeywordIndex === -1) {
+        if (!matchesBase && !matchesCustom) {
           removeHideClasses(post)
           post.dataset.hidden = false
         } else {
