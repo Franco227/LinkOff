@@ -193,10 +193,10 @@ const blockPostsByKeywords = (baseKeywords, customKeywords, contentOnly, mode, d
     if (posts.length > 5 || mode == 'dim') {
       posts.forEach((post) => {
         const postHtml = post.outerHTML
-        const customTargetHtml = contentOnly ? post.querySelector(POST_CONTENT_SELECTOR)?.outerHTML ?? '' : postHtml
+        const customTarget = contentOnly ? post.querySelector(POST_CONTENT_SELECTOR)?.textContent ?? '' : postHtml
 
         const matchesBase = baseKeywords.some((keyword) => postHtml.includes(keyword))
-        const matchesCustom = customKeywords.some((keyword) => customTargetHtml.includes(keyword))
+        const matchesCustom = customKeywords.some((keyword) => customTarget.includes(keyword))
 
         if (!matchesBase && !matchesCustom) {
           removeHideClasses(post)
